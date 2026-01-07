@@ -1,6 +1,7 @@
 # paystack-react-lite
 
 A lightweight React wrapper for Paystack payments — compatible with React 18 and above.
+This was forked from https://github.com/alimancs/paystack-react-lite, and works perfectly with NextJS (Typescript). See directions on how to use it below.
 
 ## Get Started
 
