@@ -1,7 +1,7 @@
 # paystack-react-lite
 
 A lightweight React wrapper for Paystack payments — compatible with React 18 and above.
-This was forked from https://github.com/alimancs/paystack-react-lite, and works perfectly with NextJS (Typescript). See directions on how to use it below.
+This repository was forked from https://github.com/alimancs/paystack-react-lite. I've edited the sample code below to make it work perfectly with NextJS (Typescript). See directions on how to use it below.
 
 ## Get Started
 
@@ -26,32 +26,109 @@ This React library provides a wrapper to add Paystack Payments to your React app
 6. Note that all 3 implementations produce the same results.
 
 
-### 1. Using the paystack button
+### 1. Setup your app to use the package
+Create a Custom Type Declaration file in your root folder (or anywhere Typescript can see it). For this, I created it at types/paystack-react-lite.d.ts. Add the following content to the file:
 ```javascript
-  import React from 'react';
-import { PaystackButton } from 'paystack-react-lite';
+declare module "paystack-react-lite" {
+  interface PaystackConfig {
+    email: string;
+    amount: number;
+    publicKey: string;
+    reference?: string;
+    metadata?: Record<string, unknown>;
+    channels?: (
+      | "card"
+      | "bank"
+      | "ussd"
+      | "qr"
+      | "mobile_money"
+      | "bank_transfer"
+    )[];
+    onSuccess: (response: {
+      reference: string;
+      status: string;
+      transaction: string;
+    }) => void;
+    onClose?: () => void;
+  }
 
-const config = {
-  reference: new Date().getTime().toString(),
-  email: 'user@example.com',
-  amount: 20000, // amount in kobo (Nigerian Naira)
-  publicKey: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxx',
-  firstname: 'John',
-  lastname: 'Doe',
-};
+  export function usePaystack(
+    config: PaystackConfig
+  ): {
+    initializePayment: () => void;
+  };
+}  
+```
+### Ensure TypeScript Picks It Up
 
-export default function App() {
+In your tsconfig.json, add or confirm:
+```javascript
+{
+  "compilerOptions": {
+    "typeRoots": ["./types", "./node_modules/@types"]
+  }
+}
+```
+Then restart your dev server.
+
+### 2. Create the paystack button
+You can create this anywhere. I created it in my components folder.
+```ts
+"use client";
+
+import { usePaystack } from "paystack-react-lite";
+
+export default function PayButton({
+  email,
+  amount,
+  metadata,
+}: {
+  email: string;
+  amount: number;
+  metadata: Record<string, unknown>;
+}) {
+  const { initializePayment } = usePaystack({
+    reference: new Date().getTime().toString(), // just use any random string here for the reference
+    email: email,
+    amount: amount * 100,
+    publicKey: "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    channels: ["card", "bank_transfer", "ussd"],
+    metadata: metadata,
+    onSuccess: ({ reference }) => {
+      // do whatever you want with the reference. You should most probably send the reference back to your API for verification.
+      console.log(reference);
+    },
+    onClose: () => console.log("Payment cancelled"),
+  });
+
   return (
-    <div>
-      <h1>Paystack React Lite Demo</h1>
-      <PaystackButton {...config}>
-        Pay Now
-      </PaystackButton>
-    </div>
+    <button
+      onClick={() => initializePayment()}
+      className="mt-6 w-full rounded-md bg-white py-2 font-semibold text-blue-600"
+    >
+      Proceed to Pay
+    </button>
   );
 }
-
 ```
+
+### Call the button anywhere in your main page:
+Example: in page.tsx,
+
+```ts
+import PayButton from "@/components/PayButton";
+export default function PaymentPage() {
+  return (
+    <PayButton
+      email="myemail@example.org"
+      amount={10000} //actual amount
+      metadata={metadata}
+    />
+  )
+}
+```
+
+With the above, the setup is complete. Adjust further according to your needs.
 
 ### Sending Metadata with Transaction
 If you want to send extra metadata e.g. Transaction description, user that made the transaction. Edit your config like so:
@@ -90,10 +167,10 @@ REMEMBER TO CHANGE THE KEY WHEN DEPLOYING ON A LIVE/PRODUCTION SYSTEM
 
 Why not star the github repo? I'd love the attention! Why not share the link for this repository on Twitter or Any Social Media? Spread the word!
 
-Don't forget to [follow me on twitter](https://twitter.com/aerleeeee)!
+Don't forget to [follow me on X (formerly Twitter)](https://x.com/realengrukairo)!
 
 Thanks!
-Alimam Ahmed.
+Engr. Ukairo.
 
 ## License
 
